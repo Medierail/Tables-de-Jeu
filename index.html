@@ -1,0 +1,793 @@
+<style>
+  :root{
+    --ink:#161d27;
+    --ink-soft:#2a3444;
+    --ink-softer:#3b4759;
+    --parchment:#e7ddc3;
+    --parchment-dark:#d6c69c;
+    --wine:#7c2f3d;
+    --wine-bright:#a63f52;
+    --verdigris:#3e6259;
+    --verdigris-bright:#548a7c;
+    --gold:#b8923f;
+    --text-dark:#2a2118;
+    --text-light:#ece4d2;
+    --text-muted:#9aa5b5;
+    --radius:3px;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
+
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  .board{
+    font-family:'Inter',sans-serif;
+    background:
+      radial-gradient(ellipse at top left, #1d2734 0%, var(--ink) 55%);
+    color:var(--text-light);
+    min-height:100vh;
+    padding:28px 20px 60px;
+  }
+  .board *{-webkit-tap-highlight-color:transparent;}
+  .wrap{max-width:960px;margin:0 auto;}
+
+  /* header */
+  .board-header{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    gap:16px;flex-wrap:wrap;
+    border-bottom:1px solid var(--ink-softer);
+    padding-bottom:18px;margin-bottom:28px;
+  }
+  .board-title{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(28px,4.5vw,40px);
+    letter-spacing:0.2px;
+    margin:0 0 4px;
+    color:var(--text-light);
+  }
+  .board-title em{
+    font-style:italic;color:var(--gold);
+  }
+  .board-sub{
+    margin:0;color:var(--text-muted);font-size:14px;
+    letter-spacing:0.3px;
+  }
+  .btn{
+    font-family:'Inter',sans-serif;
+    font-weight:600;font-size:14px;
+    border:none;border-radius:var(--radius);
+    padding:11px 18px;cursor:pointer;
+    transition:transform .12s ease, filter .12s ease;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+  .btn-primary{background:var(--wine);color:var(--text-light);}
+  .btn-primary:hover{filter:brightness(1.12);}
+  .btn-ghost{background:transparent;color:var(--text-light);border:1px solid var(--ink-softer);}
+  .btn-ghost:hover{border-color:var(--gold);color:var(--gold);}
+  .btn-small{padding:7px 12px;font-size:12.5px;}
+
+  /* grid of cards */
+  .grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+    gap:18px;
+  }
+  .card{
+    background:var(--parchment);
+    color:var(--text-dark);
+    border-radius:2px;
+    padding:20px 18px 16px;
+    position:relative;
+    box-shadow:0 10px 24px -14px rgba(0,0,0,.6);
+    cursor:pointer;
+    transition:transform .15s ease, box-shadow .15s ease;
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%);
+  }
+  .card:hover{transform:translateY(-3px);box-shadow:0 16px 30px -14px rgba(0,0,0,.7);}
+  .card:focus-visible{outline:2px solid var(--wine);outline-offset:3px;}
+  .pin{
+    position:absolute;top:-7px;left:50%;transform:translateX(-50%);
+    width:13px;height:13px;border-radius:50%;
+    background:var(--wine);
+    box-shadow:0 2px 4px rgba(0,0,0,.4);
+  }
+  .card-jeu{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.09em;color:var(--wine);margin-bottom:6px;
+  }
+  .card-title{
+    font-family:'Fraunces',serif;font-weight:600;
+    font-size:19px;line-height:1.2;margin:0 0 10px;
+  }
+  .card-meta{font-size:13px;line-height:1.7;color:#4a4030;}
+  .card-meta b{color:var(--text-dark);}
+  .card-footer{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-top:14px;padding-top:12px;border-top:1px dashed #b8a878;
+  }
+  .card-mj{font-size:12px;color:#5c5140;font-style:italic;}
+  .seal{
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;font-size:12px;
+    border-radius:50%;
+    width:52px;height:52px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    line-height:1.05;color:#fff;
+    flex-shrink:0;
+  }
+  .seal small{font-weight:500;font-size:8px;letter-spacing:.04em;opacity:.85;}
+  .seal-open{background:var(--verdigris);}
+  .seal-low{background:var(--gold);color:#2a2118;}
+  .seal-full{background:var(--wine);}
+
+  .empty{
+    text-align:center;padding:60px 20px;color:var(--text-muted);
+    border:1px dashed var(--ink-softer);border-radius:4px;
+  }
+  .empty b{color:var(--text-light);}
+
+  /* detail view */
+  .detail{max-width:640px;margin:0 auto;}
+  .back-link{
+    background:none;border:none;color:var(--text-muted);
+    font-family:'Inter',sans-serif;font-size:13px;cursor:pointer;
+    padding:0;margin-bottom:20px;display:inline-flex;gap:6px;align-items:center;
+  }
+  .back-link:hover{color:var(--gold);}
+  .detail-card{
+    background:var(--parchment);color:var(--text-dark);
+    border-radius:2px;padding:30px 28px;
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%);
+  }
+  .detail-jeu{
+    font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.09em;color:var(--wine);
+  }
+  .detail-title{font-family:'Fraunces',serif;font-weight:700;font-size:28px;margin:6px 0 14px;}
+  .detail-meta-row{
+    display:flex;flex-wrap:wrap;gap:18px;
+    font-size:13.5px;color:#4a4030;margin-bottom:18px;
+    padding-bottom:18px;border-bottom:1px dashed #b8a878;
+  }
+  .detail-meta-row div b{display:block;color:var(--text-dark);font-size:14px;}
+  .detail-desc{font-size:14.5px;line-height:1.65;color:#3a3020;white-space:pre-wrap;margin-bottom:22px;}
+
+  .places-bar{
+    display:flex;align-items:center;gap:14px;margin-bottom:22px;
+  }
+  .places-track{
+    flex:1;height:8px;border-radius:4px;background:#c9b98d;overflow:hidden;
+  }
+  .places-fill{height:100%;border-radius:4px;background:var(--verdigris);transition:width .3s ease;}
+  .places-label{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--text-dark);white-space:nowrap;}
+
+  .section-label{
+    font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.08em;color:#6b5f47;margin-bottom:10px;
+  }
+  .player-list{list-style:none;padding:0;margin:0 0 20px;display:flex;flex-wrap:wrap;gap:8px;}
+  .player-chip{
+    background:var(--parchment-dark);border-radius:20px;padding:5px 12px;
+    font-size:13px;color:var(--text-dark);
+  }
+  .player-chip.attente{background:transparent;border:1px dashed #8a7a56;color:#6b5f47;}
+
+  .form-row{margin-bottom:14px;}
+  .form-row label{display:block;font-size:12.5px;font-weight:600;color:#4a4030;margin-bottom:5px;}
+  .form-row input, .form-row select, .form-row textarea{
+    width:100%;font-family:'Inter',sans-serif;font-size:14px;
+    padding:10px 12px;border:1px solid #b8a878;border-radius:2px;
+    background:#f2ead6;color:var(--text-dark);
+  }
+  .form-row input:focus, .form-row select:focus, .form-row textarea:focus{
+    outline:2px solid var(--wine);outline-offset:0;border-color:var(--wine);
+  }
+  .form-row textarea{resize:vertical;min-height:80px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:480px){.form-grid{grid-template-columns:1fr;}}
+
+  .inline-msg{font-size:13px;padding:10px 12px;border-radius:2px;margin-bottom:14px;}
+  .inline-msg.err{background:#3a1e22;color:#f0b8bf;}
+  .inline-msg.ok{background:#1f3530;color:#bfe6d6;}
+
+  .share-row{
+    display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:22px;
+    padding-top:18px;border-top:1px dashed #b8a878;
+  }
+  .share-row span{font-size:12px;color:#6b5f47;}
+  .lock-badge{
+    display:inline-flex;align-items:center;gap:4px;
+    font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;
+    color:var(--wine);letter-spacing:.04em;margin-left:8px;
+  }
+  .manage-toggle{
+    background:none;border:none;color:#8a7a56;font-size:12px;
+    cursor:pointer;padding:0;margin-top:18px;text-decoration:underline;
+  }
+  .manage-box{
+    margin-top:12px;padding:14px;background:#ded0a8;border-radius:2px;
+  }
+  .manage-box .form-row{margin-bottom:10px;}
+  .danger-btn{background:var(--wine-bright);color:#fff;}
+  .danger-btn:hover{filter:brightness(1.1);}
+
+  /* create modal */
+  .modal-backdrop{
+    position:fixed;inset:0;background:rgba(10,13,18,.72);
+    display:flex;align-items:flex-start;justify-content:center;
+    padding:40px 16px;overflow-y:auto;z-index:50;
+  }
+  .modal{
+    background:var(--parchment);color:var(--text-dark);
+    border-radius:2px;padding:28px;max-width:520px;width:100%;
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%);
+  }
+  .modal h2{font-family:'Fraunces',serif;font-size:22px;margin:0 0 18px;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+
+  .loading-line{color:var(--text-muted);font-size:13px;padding:40px 0;text-align:center;}
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);}
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+</style>
+
+<div class="board" id="board">
+  <div class="wrap" id="app">
+    <div class="loading-line">Déroulement du tableau…</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ══════════════════════════════════════════════════════════════════
+  // CONFIGURATION — à faire une seule fois avant de mettre en ligne
+  // 1. Allez sur https://console.firebase.google.com, créez un projet gratuit
+  // 2. Menu de gauche → "Realtime Database" → "Créer une base de données"
+  //    → choisissez une région (europe-west1 par ex.) → mode "test"
+  // 3. Copiez l'URL affichée en haut de la base (ex. https://xxxx-default-rtdb.europe-west1.firebasedatabase.app)
+  //    et collez-la ci-dessous entre les guillemets.
+  // 4. Dans l'onglet "Règles" de la base, remplacez le contenu par :
+  //      { "rules": { ".read": true, ".write": true } }
+  //    (nécessaire car cet outil ne gère pas de comptes utilisateurs —
+  //    voir l'avertissement de sécurité fourni séparément)
+  // ══════════════════════════════════════════════════════════════════
+  const FIREBASE_DB_URL = "https://medierail-tables-default-rtdb.europe-west1.firebasedatabase.app";
+
+  // Code de création : à définir vous-même ci-dessous.
+  // C'est VOUS qui le communiquez aux MJ de confiance — sans ce code,
+  // impossible d'ouvrir une nouvelle table sur le tableau.
+  // Changez-le à tout moment en modifiant simplement la ligne ci-dessous
+  // et en republiant le fichier.
+  const CODE_CREATION_MJ = "MDJ";
+
+  const storage = {
+    async get(key){
+      const res = await fetch(FIREBASE_DB_URL + '/' + encodeURIComponent(key) + '.json');
+      if(!res.ok) throw new Error('Erreur réseau (' + res.status + ')');
+      const data = await res.json();
+      if(data === null) throw new Error('clé introuvable');
+      return { key, value: data };
+    },
+    async set(key, value){
+      const res = await fetch(FIREBASE_DB_URL + '/' + encodeURIComponent(key) + '.json', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(value)
+      });
+      if(!res.ok) return null;
+      return { key, value };
+    },
+    async delete(key){
+      const res = await fetch(FIREBASE_DB_URL + '/' + encodeURIComponent(key) + '.json', { method: 'DELETE' });
+      if(!res.ok) return null;
+      return { key, deleted: true };
+    }
+  };
+
+  const STORAGE_KEY = 'sessions-index';
+  const app = document.getElementById('app');
+  let state = { view: 'home', sessions: [], currentId: null, error: null };
+
+  function esc(s){
+    const d = document.createElement('div'); d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+  function fmtDate(dateStr){
+    if(!dateStr) return '';
+    const d = new Date(dateStr + 'T00:00:00');
+    if(isNaN(d)) return dateStr;
+    return d.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' });
+  }
+  function newId(){
+    return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+  }
+
+  async function loadIndex(){
+    try{
+      const res = await storage.get(STORAGE_KEY);
+      return res && res.value ? JSON.parse(res.value) : [];
+    }catch(e){
+      return [];
+    }
+  }
+  async function saveIndex(list){
+    await storage.set(STORAGE_KEY, JSON.stringify(list));
+  }
+  async function loadSession(id){
+    try{
+      const res = await storage.get('session:' + id);
+      return res && res.value ? JSON.parse(res.value) : null;
+    }catch(e){
+      return null;
+    }
+  }
+  async function saveSession(sess){
+    await storage.set('session:' + sess.id, JSON.stringify(sess));
+  }
+
+  function countInscrits(sess){
+    return sess.inscriptions.filter(p => p.statut === 'inscrit').length;
+  }
+
+  function sealClass(sess){
+    const n = countInscrits(sess);
+    if(n >= sess.placesMax) return 'seal-full';
+    if(sess.placesMax - n <= 2) return 'seal-low';
+    return 'seal-open';
+  }
+
+  function render(){
+    if(state.view === 'home') renderHome();
+    else if(state.view === 'detail') renderDetail();
+  }
+
+  function renderHome(){
+    const upcoming = state.sessions.slice().sort((a,b) => (a.date+a.heure).localeCompare(b.date+b.heure));
+    let cardsHtml = '';
+    if(upcoming.length === 0){
+      cardsHtml = `<div class="empty">Le tableau est vide pour l'instant.<br><b>Ouvrez la première table !</b></div>`;
+    } else {
+      cardsHtml = '<div class="grid">' + upcoming.map(s => {
+        const n = s.inscritsCount || 0;
+        const full = n >= s.placesMax;
+        const seal = full ? 'seal-full' : (s.placesMax - n <= 2 ? 'seal-low' : 'seal-open');
+        const label = full ? `COMPLET` : `${s.placesMax - n}<small>PLACE${s.placesMax-n>1?'S':''}</small>`;
+        return `
+          <div class="card" tabindex="0" role="button" data-id="${esc(s.id)}">
+            <div class="pin"></div>
+            <div class="card-jeu">${esc(s.jeu)}${s.codeAcces ? '<span class="lock-badge">🔒 sur code</span>' : ''}</div>
+            <h3 class="card-title">${esc(s.titre)}</h3>
+            <div class="card-meta">
+              <div><b>${esc(fmtDate(s.date))}</b> · ${esc(s.heure)}</div>
+              <div>${esc(s.lieu)}</div>
+            </div>
+            <div class="card-footer">
+              <div class="card-mj">MJ&nbsp;: ${esc(s.mj)}</div>
+              <div class="seal ${seal}">${label}</div>
+            </div>
+          </div>`;
+      }).join('') + '</div>';
+    }
+
+    app.innerHTML = `
+      <div class="board-header">
+        <div>
+          <h1 class="board-title">Le Tableau des <em>Tables</em></h1>
+          <p class="board-sub">Médiérail — parties de JDR & soirées jeux</p>
+        </div>
+        <button class="btn btn-primary" id="btn-new">+ Ouvrir une table</button>
+      </div>
+      ${cardsHtml}
+    `;
+    document.getElementById('btn-new').addEventListener('click', openCreateModal);
+    app.querySelectorAll('.card').forEach(el => {
+      const go = () => { location.hash = 's=' + el.dataset.id; };
+      el.addEventListener('click', go);
+      el.addEventListener('keydown', e => { if(e.key==='Enter' || e.key===' ') { e.preventDefault(); go(); } });
+    });
+  }
+
+  async function renderDetail(){
+    app.innerHTML = `<div class="loading-line">Ouverture de la table…</div>`;
+    const sess = await loadSession(state.currentId);
+    if(!sess){
+      app.innerHTML = `
+        <div class="detail">
+          <button class="back-link" id="back">&larr; Retour au tableau</button>
+          <div class="empty">Cette table n'existe plus ou le lien est incorrect.</div>
+        </div>`;
+      document.getElementById('back').addEventListener('click', goHome);
+      return;
+    }
+    const n = countInscrits(sess);
+    const pct = Math.min(100, Math.round((n / sess.placesMax) * 100));
+    const full = n >= sess.placesMax;
+    const inscrits = sess.inscriptions.filter(p => p.statut === 'inscrit');
+    const attente = sess.inscriptions.filter(p => p.statut === 'attente');
+    const shareUrl = location.origin + location.pathname + '#s=' + sess.id;
+
+    app.innerHTML = `
+      <div class="detail">
+        <button class="back-link" id="back">&larr; Retour au tableau</button>
+        <div class="detail-card">
+          <div class="detail-jeu">${esc(sess.jeu)}${sess.codeAcces ? '<span class="lock-badge">🔒 sur code</span>' : ''}</div>
+          <h2 class="detail-title">${esc(sess.titre)}</h2>
+          <div class="detail-meta-row">
+            <div><b>${esc(fmtDate(sess.date))}</b>Date</div>
+            <div><b>${esc(sess.heure)}</b>Heure</div>
+            <div><b>${esc(sess.lieu)}</b>Lieu</div>
+            <div><b>${esc(sess.mj)}</b>Maître du jeu</div>
+          </div>
+          ${sess.description ? `<div class="detail-desc">${esc(sess.description)}</div>` : ''}
+
+          <div class="places-bar">
+            <div class="places-track"><div class="places-fill" style="width:${pct}%"></div></div>
+            <div class="places-label">${n}/${sess.placesMax}</div>
+          </div>
+
+          <div id="form-zone"></div>
+
+          ${inscrits.length ? `
+            <div class="section-label">Inscrits</div>
+            <ul class="player-list">${inscrits.map(p => `<li class="player-chip">${esc(p.nom)}</li>`).join('')}</ul>
+          ` : ''}
+          ${attente.length ? `
+            <div class="section-label">Liste d'attente</div>
+            <ul class="player-list">${attente.map(p => `<li class="player-chip attente">${esc(p.nom)}</li>`).join('')}</ul>
+          ` : ''}
+
+          <div class="share-row">
+            <span>Lien de cette table&nbsp;:</span>
+            <button class="btn btn-ghost btn-small" id="copy-link">Copier le lien</button>
+            <button class="btn btn-ghost btn-small" id="ics-btn">Ajouter au calendrier</button>
+            ${sess.inscriptions.length ? `<button class="btn btn-ghost btn-small" id="csv-btn">Exporter la liste (.csv)</button>` : ''}
+          </div>
+          <button class="manage-toggle" id="manage-toggle">Options MJ (annuler cette table)</button>
+          <div id="manage-box"></div>
+        </div>
+      </div>
+    `;
+    document.getElementById('back').addEventListener('click', goHome);
+    document.getElementById('copy-link').addEventListener('click', async () => {
+      try{ await navigator.clipboard.writeText(shareUrl); flashCopy(); }
+      catch(e){ /* clipboard may be unavailable, fail silently */ }
+    });
+    document.getElementById('ics-btn').addEventListener('click', () => downloadIcs(sess));
+    const csvBtn = document.getElementById('csv-btn');
+    if(csvBtn) csvBtn.addEventListener('click', () => downloadCsv(sess));
+    document.getElementById('manage-toggle').addEventListener('click', () => renderManageBox(sess));
+
+    renderFormZone(sess, full);
+  }
+
+  function renderManageBox(sess){
+    const box = document.getElementById('manage-box');
+    if(box.dataset.open === '1'){ box.innerHTML = ''; box.dataset.open = '0'; return; }
+    box.dataset.open = '1';
+    box.innerHTML = `
+      <div class="manage-box">
+        <div id="manage-msg"></div>
+        <div class="form-row">
+          <label for="mg-code">Code MJ</label>
+          <input id="mg-code" type="text" placeholder="Entrez le code MJ défini à la création">
+        </div>
+        <button class="btn danger-btn btn-small" id="mg-cancel">Annuler définitivement cette table</button>
+      </div>
+    `;
+    document.getElementById('mg-cancel').addEventListener('click', () => cancelSession(sess.id));
+  }
+
+  async function cancelSession(id){
+    const codeInput = document.getElementById('mg-code');
+    const msgZone = document.getElementById('manage-msg');
+    const code = (codeInput.value || '').trim();
+    if(!code){
+      msgZone.innerHTML = `<div class="inline-msg err">Entrez le code MJ.</div>`;
+      return;
+    }
+    const btn = document.getElementById('mg-cancel');
+    btn.disabled = true; btn.textContent = 'Vérification…';
+    try{
+      const sess = await loadSession(id);
+      if(!sess || sess.codeMJ !== code){
+        msgZone.innerHTML = `<div class="inline-msg err">Code MJ incorrect.</div>`;
+        btn.disabled = false; btn.textContent = 'Annuler définitivement cette table';
+        return;
+      }
+      await storage.delete('session:' + id);
+      const list = await loadIndex();
+      await saveIndex(list.filter(s => s.id !== id));
+      goHome();
+    }catch(e){
+      msgZone.innerHTML = `<div class="inline-msg err">Une erreur est survenue, réessayez.</div>`;
+      btn.disabled = false; btn.textContent = 'Annuler définitivement cette table';
+    }
+  }
+
+  function downloadCsv(sess){
+    const rows = [['Nom','Statut']];
+    sess.inscriptions.forEach(p => rows.push([p.nom, p.statut === 'inscrit' ? 'Inscrit' : "Liste d'attente"]));
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    triggerDownload(blob, `inscrits-${sess.titre.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}.csv`);
+  }
+
+  function icsDate(dateStr, timeStr){
+    return (dateStr + 'T' + timeStr + ':00').replace(/[-:]/g,'');
+  }
+
+  function downloadIcs(sess){
+    const dtStart = icsDate(sess.date, sess.heure);
+    const startDate = new Date(sess.date + 'T' + sess.heure + ':00');
+    const endDate = new Date(startDate.getTime() + 3 * 60 * 60 * 1000);
+    const dtEnd = endDate.toISOString().replace(/[-:]/g,'').split('.')[0];
+    const uid = sess.id + '@medierail';
+    const ics = [
+      'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Medierail//Tableau des Tables//FR',
+      'BEGIN:VEVENT',
+      'UID:' + uid,
+      'DTSTAMP:' + dtStart,
+      'DTSTART:' + dtStart,
+      'DTEND:' + dtEnd,
+      'SUMMARY:' + escIcs(sess.jeu + ' — ' + sess.titre),
+      'DESCRIPTION:' + escIcs('MJ : ' + sess.mj + (sess.description ? ('\\n\\n' + sess.description) : '')),
+      'LOCATION:' + escIcs(sess.lieu),
+      'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:Rappel table de jeu','TRIGGER:-P1D','END:VALARM',
+      'END:VEVENT','END:VCALENDAR'
+    ].join('\r\n');
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8;' });
+    triggerDownload(blob, `table-${sess.titre.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}.ics`);
+  }
+
+  function escIcs(s){ return String(s).replace(/\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;'); }
+
+  function triggerDownload(blob, filename){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  function flashCopy(){
+    const btn = document.getElementById('copy-link');
+    if(!btn) return;
+    const old = btn.textContent;
+    btn.textContent = 'Lien copié !';
+    setTimeout(() => { btn.textContent = old; }, 1600);
+  }
+
+  function renderFormZone(sess, full){
+    const zone = document.getElementById('form-zone');
+    zone.innerHTML = `
+      <div class="section-label">${full ? "S'inscrire en liste d'attente" : "S'inscrire à cette table"}</div>
+      ${sess.codeAcces ? `<div class="inline-msg" style="background:#ded0a8;color:#4a4030;">Cette table nécessite un code d'accès. Demandez-le au MJ.</div>` : ''}
+      <div id="reg-msg"></div>
+      <div class="form-row">
+        <label for="reg-nom">Votre nom / pseudo</label>
+        <input id="reg-nom" type="text" placeholder="Ex. Aldric" maxlength="40">
+      </div>
+      ${sess.codeAcces ? `
+      <div class="form-row">
+        <label for="reg-code">Code d'accès</label>
+        <input id="reg-code" type="text" placeholder="Code fourni par le MJ" maxlength="30">
+      </div>` : ''}
+      <button class="btn btn-primary" id="reg-btn" data-label="${full ? "Rejoindre la liste d'attente" : "S'inscrire"}">${full ? "Rejoindre la liste d'attente" : "S'inscrire"}</button>
+    `;
+    document.getElementById('reg-btn').addEventListener('click', () => register(sess.id));
+  }
+
+  async function register(id){
+    const input = document.getElementById('reg-nom');
+    const nom = (input.value || '').trim();
+    const codeInput = document.getElementById('reg-code');
+    const codeSaisi = codeInput ? (codeInput.value || '').trim() : '';
+    const msgZone = document.getElementById('reg-msg');
+    if(!nom){
+      msgZone.innerHTML = `<div class="inline-msg err">Merci d'indiquer un nom.</div>`;
+      return;
+    }
+    const btn = document.getElementById('reg-btn');
+    btn.disabled = true; btn.textContent = 'Inscription…';
+    try{
+      const sess = await loadSession(id);
+      if(!sess) throw new Error('introuvable');
+      if(sess.codeAcces && sess.codeAcces.toLowerCase() !== codeSaisi.toLowerCase()){
+        msgZone.innerHTML = `<div class="inline-msg err">Code d'accès incorrect.</div>`;
+        btn.disabled = false; btn.textContent = btn.dataset.label || "S'inscrire";
+        return;
+      }
+      if(sess.inscriptions.some(p => p.nom.toLowerCase() === nom.toLowerCase())){
+        msgZone.innerHTML = `<div class="inline-msg err">Ce nom est déjà inscrit à cette table.</div>`;
+        btn.disabled = false; btn.textContent = btn.dataset.label || 'S\'inscrire';
+        return;
+      }
+      const n = countInscrits(sess);
+      const statut = n < sess.placesMax ? 'inscrit' : 'attente';
+      sess.inscriptions.push({ nom, statut });
+      await saveSession(sess);
+      await syncIndexEntry(sess);
+      msgZone.innerHTML = `<div class="inline-msg ok">${statut === 'inscrit' ? 'Inscription confirmée !' : "Ajouté·e à la liste d'attente."}</div>`;
+      state.sessions = await loadIndex();
+      setTimeout(() => renderDetail(), 500);
+    }catch(e){
+      msgZone.innerHTML = `<div class="inline-msg err">Une erreur est survenue, réessayez.</div>`;
+      btn.disabled = false; btn.textContent = 'S\'inscrire';
+    }
+  }
+
+  async function syncIndexEntry(sess){
+    const list = await loadIndex();
+    const idx = list.findIndex(s => s.id === sess.id);
+    const entry = {
+      id: sess.id, titre: sess.titre, jeu: sess.jeu, mj: sess.mj,
+      date: sess.date, heure: sess.heure, lieu: sess.lieu,
+      placesMax: sess.placesMax, inscritsCount: countInscrits(sess),
+      codeAcces: sess.codeAcces || ''
+    };
+    if(idx >= 0) list[idx] = entry; else list.push(entry);
+    await saveIndex(list);
+  }
+
+  function openCreateModal(){
+    const backdrop = document.createElement('div');
+    backdrop.className = 'modal-backdrop';
+    backdrop.innerHTML = `
+      <div class="modal">
+        <h2>Ouvrir une nouvelle table</h2>
+        <div id="create-msg"></div>
+        <div class="form-row">
+          <label for="f-codecreation">Code de création (fourni par le bureau de l'association)</label>
+          <input id="f-codecreation" type="text" placeholder="Demandez-le à l'organisation">
+        </div>
+        <div class="form-grid">
+          <div class="form-row">
+            <label for="f-titre">Titre de la table</label>
+            <input id="f-titre" type="text" placeholder="Ex. Danger à Portnoire" maxlength="60">
+          </div>
+          <div class="form-row">
+            <label for="f-jeu">Jeu / système</label>
+            <input id="f-jeu" type="text" placeholder="Ex. Rolemaster, Catan…" maxlength="40">
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="f-mj">Votre nom (MJ ou organisateur·rice)</label>
+          <input id="f-mj" type="text" maxlength="40">
+        </div>
+        <div class="form-grid">
+          <div class="form-row">
+            <label for="f-date">Date</label>
+            <input id="f-date" type="date">
+            <div id="date-avail-msg" style="margin-top:6px;font-size:12px;"></div>
+          </div>
+          <div class="form-row">
+            <label for="f-heure">Heure</label>
+            <input id="f-heure" type="time" value="20:00">
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-row">
+            <label for="f-lieu">Lieu</label>
+            <input id="f-lieu" type="text" placeholder="Ex. Local Médiérail" maxlength="60">
+          </div>
+          <div class="form-row">
+            <label for="f-places">Places disponibles</label>
+            <input id="f-places" type="number" min="1" max="30" value="5">
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="f-desc">Description (optionnel)</label>
+          <textarea id="f-desc" placeholder="Pitch du scénario, niveau requis, matériel à prévoir…"></textarea>
+        </div>
+        <div class="form-grid">
+          <div class="form-row">
+            <label for="f-codemj">Code MJ (à garder pour annuler la table)</label>
+            <input id="f-codemj" type="text" placeholder="Ex. un mot de passe simple" maxlength="30">
+          </div>
+          <div class="form-row">
+            <label for="f-codeacces">Code d'accès joueurs (optionnel)</label>
+            <input id="f-codeacces" type="text" placeholder="Laisser vide = table ouverte à tous" maxlength="30">
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" id="cancel-create">Annuler</button>
+          <button class="btn btn-primary" id="confirm-create">Publier la table</button>
+        </div>
+      </div>
+    `;
+    document.getElementById('board').appendChild(backdrop);
+    backdrop.addEventListener('click', e => { if(e.target === backdrop) backdrop.remove(); });
+    document.getElementById('cancel-create').addEventListener('click', () => backdrop.remove());
+    document.getElementById('confirm-create').addEventListener('click', () => createSession(backdrop));
+    document.getElementById('f-date').addEventListener('change', checkDateAvailability);
+  }
+
+  const MAX_TABLES_PAR_SOIR = 2;
+
+  async function countSessionsOnDate(date, excludeId){
+    const list = await loadIndex();
+    return list.filter(s => s.date === date && s.id !== excludeId).length;
+  }
+
+  async function checkDateAvailability(){
+    const date = document.getElementById('f-date').value;
+    const msgZone = document.getElementById('date-avail-msg');
+    if(!date){ msgZone.textContent = ''; return; }
+    msgZone.textContent = 'Vérification des salles disponibles…';
+    msgZone.style.color = '#6b5f47';
+    const count = await countSessionsOnDate(date);
+    const restant = MAX_TABLES_PAR_SOIR - count;
+    if(restant <= 0){
+      msgZone.textContent = `Complet : ${MAX_TABLES_PAR_SOIR} tables déjà prévues ce soir-là (2 salles disponibles). Choisissez une autre date.`;
+      msgZone.style.color = 'var(--wine)';
+    } else {
+      msgZone.textContent = `${restant} salle${restant > 1 ? 's' : ''} encore disponible${restant > 1 ? 's' : ''} ce soir-là.`;
+      msgZone.style.color = 'var(--verdigris)';
+    }
+  }
+
+  async function createSession(backdrop){
+    const codeCreation = document.getElementById('f-codecreation').value.trim();
+    const titre = document.getElementById('f-titre').value.trim();
+    const jeu = document.getElementById('f-jeu').value.trim();
+    const mj = document.getElementById('f-mj').value.trim();
+    const date = document.getElementById('f-date').value;
+    const heure = document.getElementById('f-heure').value;
+    const lieu = document.getElementById('f-lieu').value.trim();
+    const places = parseInt(document.getElementById('f-places').value, 10);
+    const description = document.getElementById('f-desc').value.trim();
+    const codeMJ = document.getElementById('f-codemj').value.trim();
+    const codeAcces = document.getElementById('f-codeacces').value.trim();
+    const msgZone = document.getElementById('create-msg');
+
+    if(!titre || !jeu || !mj || !date || !heure || !lieu || !places || places < 1 || !codeMJ){
+      msgZone.innerHTML = `<div class="inline-msg err">Merci de remplir tous les champs obligatoires, y compris le code MJ.</div>`;
+      return;
+    }
+    if(!codeCreation || codeCreation !== CODE_CREATION_MJ){
+      msgZone.innerHTML = `<div class="inline-msg err">Code de création manquant ou incorrect. Demandez-le au bureau de l'association.</div>`;
+      return;
+    }
+    const btn = document.getElementById('confirm-create');
+    btn.disabled = true; btn.textContent = 'Vérification des salles…';
+    const dejaPrises = await countSessionsOnDate(date);
+    if(dejaPrises >= MAX_TABLES_PAR_SOIR){
+      msgZone.innerHTML = `<div class="inline-msg err">Complet : ${MAX_TABLES_PAR_SOIR} tables sont déjà prévues le ${esc(fmtDate(date))} (2 salles disponibles). Choisissez une autre date.</div>`;
+      btn.disabled = false; btn.textContent = 'Publier la table';
+      return;
+    }
+    btn.textContent = 'Publication…';
+    try{
+      const id = newId();
+      const sess = { id, titre, jeu, mj, date, heure, lieu, placesMax: places, description, codeMJ, codeAcces, inscriptions: [] };
+      await saveSession(sess);
+      await syncIndexEntry(sess);
+      state.sessions = await loadIndex();
+      backdrop.remove();
+      location.hash = 's=' + id;
+    }catch(e){
+      msgZone.innerHTML = `<div class="inline-msg err">La publication a échoué, réessayez.</div>`;
+      btn.disabled = false; btn.textContent = 'Publier la table';
+    }
+  }
+
+  function goHome(){ location.hash = ''; }
+
+  function routeFromHash(){
+    const h = location.hash.replace('#','');
+    const params = new URLSearchParams(h);
+    const sid = params.get('s');
+    if(sid){ state.view = 'detail'; state.currentId = sid; renderDetail(); }
+    else { state.view = 'home'; render(); }
+  }
+
+  window.addEventListener('hashchange', routeFromHash);
+
+  (async function init(){
+    state.sessions = await loadIndex();
+    routeFromHash();
+  })();
+})();
+</script>
