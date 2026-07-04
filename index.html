@@ -327,6 +327,11 @@
     await storage.set('session:' + sess.id, JSON.stringify(sess));
   }
 
+  function todayStr(){
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
   function countInscrits(sess){
     return sess.inscriptions.filter(p => p.statut === 'inscrit').length;
   }
@@ -344,18 +349,19 @@
   }
 
   function renderHome(){
-    const upcoming = state.sessions.slice().sort((a,b) => (a.date+a.heure).localeCompare(b.date+b.heure));
-    let cardsHtml = '';
-    if(upcoming.length === 0){
-      cardsHtml = `<div class="empty">Le tableau est vide pour l'instant.<br><b>Ouvrez la première table !</b></div>`;
-    } else {
-      cardsHtml = '<div class="grid">' + upcoming.map(s => {
+    const today = todayStr();
+    const all = state.sessions.slice().sort((a,b) => (a.date+a.heure).localeCompare(b.date+b.heure));
+    const upcoming = all.filter(s => s.date >= today);
+    const past = all.filter(s => s.date < today).reverse();
+
+    function buildGrid(list, dim){
+      return '<div class="grid">' + list.map(s => {
         const n = s.inscritsCount || 0;
         const full = n >= s.placesMax;
         const seal = full ? 'seal-full' : (s.placesMax - n <= 2 ? 'seal-low' : 'seal-open');
         const label = full ? `COMPLET` : `${s.placesMax - n}<small>PLACE${s.placesMax-n>1?'S':''}</small>`;
         return `
-          <div class="card" tabindex="0" role="button" data-id="${esc(s.id)}">
+          <div class="card" tabindex="0" role="button" data-id="${esc(s.id)}" style="${dim ? 'opacity:.6;' : ''}">
             <div class="pin"></div>
             <div class="card-jeu">${esc(s.jeu)}${s.codeAcces ? '<span class="lock-badge">🔒 sur code</span>' : ''}</div>
             <h3 class="card-title">${esc(s.titre)}</h3>
@@ -371,6 +377,18 @@
       }).join('') + '</div>';
     }
 
+    let cardsHtml = '';
+    if(upcoming.length === 0){
+      cardsHtml = `<div class="empty">Le tableau est vide pour l'instant.<br><b>Ouvrez la première table !</b></div>`;
+    } else {
+      cardsHtml = buildGrid(upcoming, false);
+    }
+
+    const pastHtml = past.length ? `
+      <button class="manage-toggle" id="past-toggle" style="margin-top:28px;">Tables passées (${past.length})</button>
+      <div id="past-zone"></div>
+    ` : '';
+
     app.innerHTML = `
       <div class="board-header">
         <div>
@@ -380,8 +398,24 @@
         <button class="btn btn-primary" id="btn-new">+ Ouvrir une table</button>
       </div>
       ${cardsHtml}
+      ${pastHtml}
     `;
     document.getElementById('btn-new').addEventListener('click', openCreateModal);
+    attachCardHandlers();
+
+    const pastToggle = document.getElementById('past-toggle');
+    if(pastToggle){
+      pastToggle.addEventListener('click', () => {
+        const zone = document.getElementById('past-zone');
+        if(zone.dataset.open === '1'){ zone.innerHTML = ''; zone.dataset.open = '0'; return; }
+        zone.dataset.open = '1';
+        zone.innerHTML = buildGrid(past, true);
+        attachCardHandlers();
+      });
+    }
+  }
+
+  function attachCardHandlers(){
     app.querySelectorAll('.card').forEach(el => {
       const go = () => { location.hash = 's=' + el.dataset.id; };
       el.addEventListener('click', go);
